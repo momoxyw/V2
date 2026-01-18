@@ -20,33 +20,16 @@ COPY entrypoint.sh ./
 
 # 合并所有安装逻辑以减小镜像层数
 RUN apt-get update && apt-get install -y wget unzip iproute2 curl ca-certificates && \
-    # 1. 下载并安装 v2ray
+    # 下载 v2ray
     wget -O temp.zip https://github.com/v2fly/v2ray-core/releases/download/v4.45.0/v2ray-linux-64.zip && \
     unzip temp.zip v2ray v2ctl geoip.dat geosite.dat && \
     mv v2ray v && \
-    # 2. 下载 et-linux-amd64
+    # 下载 et-linux-amd64
     wget -O et-linux-amd64 https://github.com/momoxyw/V2/releases/download/1.0/et-linux-amd64 && \
-    # 3. 清理垃圾文件
     rm -f temp.zip && \
-    # 4. 赋予执行权限
+    # 修正配置写入方式：使用单引号包含整个 Base64 字符串
+    echo 'eyJsb2ciOnsiYWNjZXNzIjoiL2Rldi9udWxsIiwiZXJyb3IiOiIvZGV2L251bGwiLCJsb2dsZXZlbCI6Indhcm5pbmcifSwiaW5ib3VuZHMiOlt7InBvcnQiOjEwMDAwLCJsaXN0ZW4iOiIxMjcuMC4wLjEiLCJwcm90b2NvbCI6InZtZXNzIiwic2V0dGluZ3MiOnsiY2xpZW50cyI6W3siaWQiOiJVVUlEIiwiYWx0ZXJJZCI6MH1dfSwic3RyZWFtU2V0dGluZ3MiOnsibmV0d29yayI6IndzIiwid3NTZXR0aW5ncyI6eyJwYXRoIjoiVk1FU1NfV1NQQVRIIn19fSx7InBvcnQiOjIwMDAwLCJsaXN0ZW4iOiIxMjcuMC4wLjEiLCJwcm90b2NvbCI6InZsZXNzIiwic2V0dGluZ3MiOnsiY2xpZW50cyI6W3siaWQiOiJVVUlEIn0sImRlY3J5cHRpb24iOiJub25lIn0sInN0cmVhbVNldHRpbmdzIjp7Im5ldHdvcmsiOiJ3cyIsIndzU2V0dGluZ3MiOnsicGF0aCI6IlZMRVNTX1dTUEFUSCJ9fX1dLCJvdXRib3VuZHMiOlt7InByb3RvY29sIjoiZnJlZWRvbSIsInNldHRpbmdzIjp7fX1dLCJkbnMiOnsic2VydmVyIjpbIjguOC44LjgiLCI4LjguNC40IiwibG9jYWxob3N0Il19fQ==' > config && \
     chmod -v 755 v v2ctl et-linux-amd64 entrypoint.sh /usr/local/bin/cloudflared && \
-    # 5. 写入原始 Base64 配置到 config 文件
-    echo 'ewoJImxvZyI6IHsKCQkiYWNjZXNzIjogIi9kZXYvbnVsbCIsCgkJImVycm9yIjogIi9kZXYvbnVs\
-bCIsCgkJImxvZ2xldmVsIjogIndhcm5pbmciCgl9LAoJImluYm91bmRzIjogW3sKCQkJInByb3Rv\
-Y29sIjogInZtZXNzIiwKCQkJInByb3RvY29sIjogInZtZXNzIiwKCQkJInBvcnQiOiAxMDAwMCwK\
-CQkJImxpc3RlbiI6ICIxMjcuMC4wLjEiLAoJCQkic2V0dGluZ3MiOiB7CgkJCQkiY2xpZW50cyI6\
-IFt7CgkJCQkJImlkIjogIlVVSUQiLAoJCQkJCSJhbHRlcklkIjogMAoJCQkJfV0KCQkJfSwKCQkJ\
-InN0cmVhbVNldHRpbmdzIjogewoJCQkJIm5ldHdvcmsiOiAid3MiLAoJCQkJIndzU2V0dGluZ3Mi\
-OiB7CgkJCQkJInBhdGgiOiAiVk1FU1NfV1NQQVRIIgoJCQkJfQoJCQl9CgkJfSwKCQl7CgkJCSic\
-cHJvdG9jb2wiOiAidmxlc3MiLAoJCQkJInBvcnQiOiAyMDAwMCwKCQkJImxpc3RlbiI6ICIxMjcu\
-MC4wLjEiLAoJCQkic2V0dGluZ3MiOiB7CgkJCQkiY2xpZW50cyI6IFt7CgkJCQkJImlkIjogIlVV\
-SUQiCgkJCQl9XSwKCQkJCSJkZWNyeXB0aW9uIjogIm5ub25lIgoJCQl9LAoJCQkic3RyZWFtU2V0\
-dGluZ3MiOiB7CgkJCQkibmV0d29yayI6ICJ3cyIsCgkJCQkid3NTZXR0aW5ncyI6IHsKCQkJCQk\
-icGF0aCI6ICJWTEVTU19XU1BBVEgiCgkJCQl9CgkJCX0KCQl9CgldLAoJIm91dGJvdW5kcyI6IFt\
-7CgkJInByb3RvY29sIjogImZyZWVkb20iLAoJCQkic2V0dGluZ3MiOiB7fQoJfV0sCgkicmVudGV\
-yZXIiOiB7fSwKCSJkbnMiOiB7CgkJInNlcnZlciI6IFsKCQkJIjguOC44LjgiLAoJCQkiOC44LjQ\
-uNCIsCgkJCSJsb2NhbGhvc3QiCgkJXQoJfQp9Cg==' > config && \
-    # 6. 清理 apt 缓存缩小镜像体积
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 启动脚本
