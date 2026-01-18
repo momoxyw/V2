@@ -16,10 +16,10 @@ nginx
 
 # 4. 启动隧道组件
 # 修正 X-Tunnel 监听格式，确保 cloudflared 能连上 [::]
-nohup ./et-linux-amd64 -l tcp://[::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
+nohup ./et-linux-amd64 -l ws://[::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 # 稍等 1 秒确保 8880 端口就绪，然后启动 CF 隧道
 sleep 1
-nohup cloudflared tunnel --url http://127.0.0.1:8880 > cf_xt.log 2>&1 &
+nohup cloudflared tunnel --url http://[::]:8880 > cf_xt.log 2>&1 &
 
 # 5. 【后台运行】哪吒探针安装 (不阻塞主流程)
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
