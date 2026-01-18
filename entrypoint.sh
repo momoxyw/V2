@@ -33,33 +33,30 @@ fi
 # 6. 启动 Cloudflared (核心修改：绝对路径 + 端口指向)
 # 既然客户端不能填路径，我们必须直接指向 X-Tunnel 的 8880
 sleep 3
-nohup /app/cloudflared tunnel --no-autoupdate --url http://[::1]:8880 > cf_xt.log 2>&1 &
+# 使用 --origin-enable-http2 确保 WebSocket 握手头信息完整传递
+nohup /app/cloudflared tunnel --no-autoupdate --protocol http2 --url http://[::1]:80 --origin-enable-http2 > cf_xt.log 2>&1 &
 
 # 7. 生成主页内容 (回归你最喜欢的经典 grep 逻辑)
 (
     echo "正在检索域名..."
     for i in {1..30}; do
-        # 回归你最开始好用的 grep 方式
-        DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
+        # 换一种抓取方式，直接搜关键词 trycloudflare.com
+        DOMAIN_XT=$(grep -o 'https://[^ ]*trycloudflare\.com' cf_xt.log | head -n 1)
         
         if [ -n "$DOMAIN_XT" ]; then
-            echo "成功获取域名: $DOMAIN_XT"
-            cat <<EOF > /usr/share/nginx/html/index.html
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Success</title></head>
-<body style="text-align:center; padding:50px; font-family:sans-serif;">
-    <h1 style="color:#333;">🚀 服务已就绪</h1>
-    <p>隧道地址: <b style="color:#f38020;">$DOMAIN_XT</b></p>
-    <p style="color:red;">注意：客户端填地址和端口443，【不需要】填路径</p>
-    <hr>
-    <p style="font-size:0.8em; color:#666;">UUID: $UUID</p>
-</body>
-</html>
-EOF
+            echo "------------------------------------------"
+            echo "你的专属域名: $DOMAIN_XT"
+            echo "------------------------------------------"
+            
+            # 生成 index.html 到 /usr/share/nginx/html
+            echo "Service is running at $DOMAIN_XT" > /usr/share/nginx/html/index.html
             break
         fi
-        echo "第 $i 次尝试检索域名..."
+        # 调试：如果没抓到，每 5 次打印一次日志末尾
+        if [ $((i%5)) -eq 0 ]; then
+             echo "当前日志内容摘要："
+             tail -n 3 cf_xt.log
+        fi
         sleep 2
     done
 ) &
