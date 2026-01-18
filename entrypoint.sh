@@ -33,12 +33,16 @@ if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; 
     ) &
 fi
 
-# 6. 生成主页内容
+# 6. 生成主页内容 (增强版：持续监测直到域名出现)
 (
     echo "正在等待 Cloudflare 生成域名..."
-    for i in {1..15}; do
+    # 循环检测 30 秒
+    for i in {1..30}; do
+        # 尝试从日志中抓取 trycloudflare.com 域名
         DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
+        
         if [ -n "$DOMAIN_XT" ]; then
+            echo "抓取到域名: $DOMAIN_XT"
             cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
@@ -46,29 +50,32 @@ fi
     <meta charset="UTF-8">
     <title>Service Dashboard</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f7f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; }
-        h1 { color: #2c3e50; }
-        .domain { color: #f38020; font-weight: bold; font-size: 1.2em; }
-        .path { color: #3498db; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; color: #1c1e21; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; max-width: 500px; }
+        h1 { color: #007bff; margin-bottom: 20px; }
+        .domain { background: #e7f3ff; color: #007bff; padding: 10px 15px; border-radius: 6px; font-weight: bold; font-size: 1.1em; word-break: break-all; display: block; margin: 15px 0; }
+        .info { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        .path { color: #d63384; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>🚀 极速 H3 服务已就绪</h1>
-        <p>主域名: <span class="domain">$DOMAIN_XT</span></p>
-        <hr>
-        <p>X-Tunnel 路径: <span class="path">$XTUNNEL_WSPATH</span></p>
-        <p>V2Ray 路径: <span class="path">$VMESS_WSPATH / $VLESS_WSPATH</span></p>
-        <p style="font-size:0.8em; color:#999;">UUID: $UUID</p>
+        <h1>🚀 H3 加速服务已上线</h1>
+        <p>您的临时访问地址：</p>
+        <span class="domain">$DOMAIN_XT</span>
+        <div class="info">
+            <p>📍 <b>X-Tunnel 路径:</b> <span class="path">/xtunnel</span></p>
+            <p>📍 <b>V2Ray 路径:</b> <span class="path">$VMESS_WSPATH / $VLESS_WSPATH</span></p>
+            <p>🔑 <b>UUID:</b> $UUID</p>
+            <p>⚡ <b>协议栈:</b> HTTP/3 (QUIC) + IPv6 [::1]</p>
+        </div>
     </div>
 </body>
 </html>
 EOF
-            echo "服务上线: $DOMAIN_XT"
             break
         fi
-        sleep 1
+        sleep 2 # 每 2 秒检查一次
     done
 ) &
 
