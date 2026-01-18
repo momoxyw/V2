@@ -19,9 +19,9 @@ sed -i "s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" /etc/
 nginx
 # 启动 X-Tunnel (端口 8880)
 chmod +x et-linux-amd64
-nohup ./et-linux-amd64 -l 127.0.0.1:8880 token a1b2c3 > xtunnel.log 2>&1 &
+nohup ./et-linux-amd64 -l ws://[::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 # 启动 Cloudflare Tunnel
-nohup cloudflared tunnel --url http://127.0.0.1:8880 > cf_xt.log 2>&1 &
+nohup cloudflared tunnel --url http://[::]:8880 > cf_xt.log 2>&1 &
 
 # 5. 【后台运行】将耗时的哪吒探针安装放到后台，不阻塞启动流程
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
