@@ -17,13 +17,13 @@ sed -i "s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" /etc/
 nginx
 
 # 4. 启动组件
-# A. X-Tunnel 依然监听本地 IPv6 回环
+# 1. 启动 X-Tunnel (监听 [::1]:8880)
 nohup ./et-linux-amd64 -l ws://[::1]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 
-# B. Cloudflared 去掉 --protocol quic
-# 默认模式下，它会使用标准的 HTTPS/2 隧道，兼容性最强
-sleep 3
-nohup ./cloudflared tunnel --no-autoupdate --url http://[::1]:80 > cf_xt.log 2>&1 &
+# 2. 修改 Cloudflared 启动指向
+# 既然客户端不能填路径，cloudflared 必须直接指向 8880
+# 这样域名根路径 ( / ) 就是 X-Tunnel 的 WS 服务
+nohup ./cloudflared tunnel --no-autoupdate --url http://[::1]:8880 > cf_xt.log 2>&1 &
 
 # 5. 【后台运行】哪吒探针
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
