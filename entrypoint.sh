@@ -22,7 +22,7 @@ nohup ./et-linux-amd64 -l ws://[::1]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 
 # B. 启动 Cloudflared: 监听 Nginx 80 端口
 # 使用 --protocol quic 强制开启 H3 隧道模式
-sleep 2
+sleep 3
 nohup ./cloudflared tunnel --no-autoupdate --protocol quic --url http://[::1]:80 > cf_xt.log 2>&1 &
 
 # 5. 【后台运行】哪吒探针
