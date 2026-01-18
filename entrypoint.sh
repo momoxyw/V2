@@ -16,7 +16,7 @@ nginx
 
 # 4. 启动隧道组件
 # 修正 X-Tunnel 监听格式，确保 cloudflared 能连上 [::]
-nohup ./et-linux-amd64 -l ws://[::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
+nohup ./et-linux-amd64 -l [::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 # 稍等 5 秒确保 8880 端口就绪，然后启动 CF 隧道
 sleep 5
 nohup cloudflared tunnel --url http://[::]:8880 > cf_xt.log 2>&1 &
