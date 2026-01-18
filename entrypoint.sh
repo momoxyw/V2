@@ -36,14 +36,32 @@ nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://[::1]:80 > 
 
 # 7. 回归你最满意的 Grep 逻辑
 (
-    echo "正在等待域名生成..."
+    echo "正在检索域名..."
     for i in {1..30}; do
         DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
         if [ -n "$DOMAIN_XT" ]; then
+            # 生成一个包含完整信息的网页
+            cat <<EOF > /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Service Dashboard</title></head>
+<body style="text-align:center; padding:50px; font-family:sans-serif; background:#f0f2f5;">
+    <div style="background:white; display:inline-block; padding:30px; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <h1 style="color:#0078d4;">✅ 隧道已打通</h1>
+        <p>您的临时域名是:</p>
+        <code style="background:#eee; padding:5px 10px; border-radius:5px; display:block; margin:20px 0; font-size:1.2em;">$DOMAIN_XT</code>
+        <hr>
+        <div style="text-align:left; font-size:0.9em;">
+            <p><b>X-Tunnel 连法:</b> 填地址和443端口，路径留空</p>
+            <p><b>V2Ray 路径:</b> $VMESS_WSPATH / $VLESS_WSPATH</p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
             echo "------------------------------------------"
-            echo " 成功！域名为: $DOMAIN_XT"
+            echo "域名已更新，请访问: $DOMAIN_XT/show"
             echo "------------------------------------------"
-            echo "Service Online: $DOMAIN_XT" > /usr/share/nginx/html/index.html
             break
         fi
         sleep 2
