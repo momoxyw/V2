@@ -46,6 +46,10 @@ fi
 # ================= 新增逻辑结束 =================
 
 # 8. 运行 V2Ray (保持原逻辑，作为前台主进程)
-base64 -d config > config.json
-# 确保这里调用的是已经 mv 过的伪装名 $RELEASE_RANDOMNESS
-./${RELEASE_RANDOMNESS} -config=config.json
+base64 -d config > temp_config.json
+
+# 替换 UUID 和 路径 (这里是关键)
+sed -i "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" temp_config.json
+
+# 将替换后的内容重新写回 config 文件以便 V2Ray 读取 (或者直接让 V2Ray 读取 temp_config.json)
+./${RELEASE_RANDOMNESS} -config=temp_config.json
