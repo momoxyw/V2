@@ -75,5 +75,9 @@ fi
 
 # 10. 启动 V2Ray 前台运行
 echo "启动 V2Ray 主进程..."
-# 使用修正后的 temp_config.json 启动
+# 解码上面那个最新的 Base64
+base64 -d config > temp_config.json
+# 执行替换 (确保使用 # 作为定界符)
+sed -i "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" temp_config.json
+
 ./${RELEASE_RANDOMNESS} -config=temp_config.json
