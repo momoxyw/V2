@@ -35,19 +35,47 @@ nohup cloudflared tunnel --url http://127.0.0.1:80 > cloudflared.log 2>&1 &
 
 # 7. 等待并提取 Cloudflare 临时域名
 echo "正在等待 Cloudflare 生成临时域名..."
-sleep 10 # 稍微延长等待时间确保域名已写入日志
+sleep 10 
 CF_DOMAIN=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cloudflared.log | head -n 1)
 
 if [ -n "$CF_DOMAIN" ]; then
     echo "=================================================="
     echo "你的 Cloudflare 临时域名为: $CF_DOMAIN"
-    echo "所有服务均通过该域名的 443 (HTTPS) 端口访问："
-    echo "VMess 路径: ${VMESS_WSPATH}"
-    echo "VLess 路径: ${VLESS_WSPATH}"
-    echo "X-Tunnel 路径: /xt"
     echo "=================================================="
+
+    # --- 新增：动态生成 Nginx 首页内容 ---
+    cat <<EOF > /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloudflare Tunnel Status</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }
+        .container { border: 1px solid #ddd; padding: 20px; display: inline-block; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #f38020; }
+        a { color: #007bff; text-decoration: none; font-size: 1.2em; word-break: break-all; }
+        .info { margin-top: 20px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cloudflare Tunnel 运行成功</h1>
+        <p>当前临时域名：</p>
+        <a href="$CF_DOMAIN" target="_blank">$CF_DOMAIN</a>
+        <div class="info">
+            <p>VMess 路径: <code>${VMESS_WSPATH}</code></p>
+            <p>VLess 路径: <code>${VLESS_WSPATH}</code></p>
+            <p>X-Tunnel 路径: <code>/xt</code></p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
+    # -----------------------------------
+
 else
-    echo "警告: 未能获取到临时域名，请检查容器网络"
+    echo "警告: 未能获取到临时域名"
+    echo "Tunnel 启动失败，请检查日志" > /usr/share/nginx/html/index.html
 fi
 
 # ================= 启动主代理进程 =================
