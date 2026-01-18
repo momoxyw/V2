@@ -43,21 +43,26 @@ nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://[::1]:80 > 
             cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Service Online</title></head>
+<head><meta charset="UTF-8"><title>服务状态</title></head>
 <body style="text-align:center; padding:50px; font-family:sans-serif; background:#f4f7f6;">
     <div style="display:inline-block; background:white; padding:40px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
-        <h1 style="color:#27ae60;">✅ 隧道已激活</h1>
-        <p>您的直连地址 (不含路径):</p>
-        <code style="background:#eee; padding:10px; border-radius:5px; display:block; font-size:1.2em; color:#d35400;">$DOMAIN_XT</code>
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        <p style="font-size:0.9em; color:#666;">客户端配置：端口 443 | 开启 TLS | <b>路径留空</b></p>
+        <h1 style="color:#2ecc71;">✅ 隧道已激活</h1>
+        <p>您的客户端直连地址:</p>
+        <code style="background:#eee; padding:10px; border-radius:5px; display:block; font-size:1.2em; color:#e67e22;">$DOMAIN_XT</code>
+        <hr>
+        <p style="color:#666; font-size:0.9em;">配置：端口 443 | 开启 TLS | 路径留空</p>
     </div>
 </body>
 </html>
 EOF
-            echo "网页已更新，直接访问域名即可查看。"
+            echo "------------------------------------------"
+            echo " 成功！直接访问域名即可看到网页和配置信息"
+            echo "------------------------------------------"
             break
         fi
+        sleep 2
+    done
+) &
 
 # 哪吒探针
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
