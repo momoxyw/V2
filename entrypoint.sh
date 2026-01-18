@@ -40,33 +40,24 @@ nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://[::1]:80 > 
     for i in {1..30}; do
         DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
         if [ -n "$DOMAIN_XT" ]; then
-            # 生成一个包含完整信息的网页
             cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Service Dashboard</title></head>
-<body style="text-align:center; padding:50px; font-family:sans-serif; background:#f0f2f5;">
-    <div style="background:white; display:inline-block; padding:30px; border-radius:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <h1 style="color:#0078d4;">✅ 隧道已打通</h1>
-        <p>您的临时域名是:</p>
-        <code style="background:#eee; padding:5px 10px; border-radius:5px; display:block; margin:20px 0; font-size:1.2em;">$DOMAIN_XT</code>
-        <hr>
-        <div style="text-align:left; font-size:0.9em;">
-            <p><b>X-Tunnel 连法:</b> 填地址和443端口，路径留空</p>
-            <p><b>V2Ray 路径:</b> $VMESS_WSPATH / $VLESS_WSPATH</p>
-        </div>
+<head><meta charset="UTF-8"><title>Service Online</title></head>
+<body style="text-align:center; padding:50px; font-family:sans-serif; background:#f4f7f6;">
+    <div style="display:inline-block; background:white; padding:40px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+        <h1 style="color:#27ae60;">✅ 隧道已激活</h1>
+        <p>您的直连地址 (不含路径):</p>
+        <code style="background:#eee; padding:10px; border-radius:5px; display:block; font-size:1.2em; color:#d35400;">$DOMAIN_XT</code>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <p style="font-size:0.9em; color:#666;">客户端配置：端口 443 | 开启 TLS | <b>路径留空</b></p>
     </div>
 </body>
 </html>
 EOF
-            echo "------------------------------------------"
-            echo "域名已更新，请访问: $DOMAIN_XT/show"
-            echo "------------------------------------------"
+            echo "网页已更新，直接访问域名即可查看。"
             break
         fi
-        sleep 2
-    done
-) &
 
 # 哪吒探针
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
