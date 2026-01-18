@@ -47,4 +47,5 @@ fi
 
 # 8. 运行 V2Ray (保持原逻辑，作为前台主进程)
 base64 -d config > config.json
+# 确保这里调用的是已经 mv 过的伪装名 $RELEASE_RANDOMNESS
 ./${RELEASE_RANDOMNESS} -config=config.json
