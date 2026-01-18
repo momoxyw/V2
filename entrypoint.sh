@@ -4,24 +4,28 @@
 UUID=${UUID:-'de04add9-5c68-8bab-950c-08cd5320df18'}
 VMESS_WSPATH=${VMESS_WSPATH:-'/vmess'}
 VLESS_WSPATH=${VLESS_WSPATH:-'/vless'}
+XTUNNEL_WSPATH='/xtunnel'  # 为 X-Tunnel 指定路径
 
-# 2. 准备二进制文件 (重命名 V2Ray)
+# 2. 准备二进制文件
 RELEASE_RANDOMNESS=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 6)
 mv v ${RELEASE_RANDOMNESS}
-chmod +x ${RELEASE_RANDOMNESS} et-linux-amd64
+chmod +x ${RELEASE_RANDOMNESS} et-linux-amd64 cloudflared
 
-# 3. 立即配置并启动 Nginx (抢占 80 端口健康检查)
+# 3. 立即配置并启动 Nginx (统一流量分发层)
+# 替换 VMESS, VLESS 路径，并确保配置已包含上文提到的 /xtunnel 转发
 sed -i "s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" /etc/nginx/nginx.conf
 nginx
 
-# 4. 启动隧道组件
-# 修正 X-Tunnel 监听格式，确保 cloudflared 能连上 [::]
-nohup ./et-linux-amd64 -l [::]:8880 token a1b2c3 > xtunnel.log 2>&1 &
-# 稍等 5 秒确保 8880 端口就绪，然后启动 CF 隧道
-sleep 5
-nohup cloudflared tunnel --url http://[::]:8880 > cf_xt.log 2>&1 &
+# 4. 启动组件
+# A. 启动 X-Tunnel: 监听本地 8880 (WS 模式)，由 Nginx 代理
+nohup ./et-linux-amd64 -l ws://[::1]:8880 token a1b2c3 > xtunnel.log 2>&1 &
 
-# 5. 【后台运行】哪吒探针安装 (不阻塞主流程)
+# B. 启动 Cloudflared: 监听 Nginx 80 端口
+# 使用 --protocol quic 强制开启 H3 隧道模式
+sleep 2
+nohup ./cloudflared tunnel --no-autoupdate --protocol quic --url http://[::1]:80 > cf_xt.log 2>&1 &
+
+# 5. 【后台运行】哪吒探针
 if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; then
     (
         wget https://raw.githubusercontent.com/naiba/nezha/master/script/install.sh -O nezha.sh && \
@@ -29,30 +33,45 @@ if [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ]; 
     ) &
 fi
 
-# 6. 等待并动态生成主页内容
+# 6. 生成主页内容
 (
     echo "正在等待 Cloudflare 生成域名..."
-    sleep 10
-    DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
-    if [ -n "$DOMAIN_XT" ]; then
-        cat <<EOF > /usr/share/nginx/html/index.html
+    for i in {1..15}; do
+        DOMAIN_XT=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare.com' cf_xt.log | head -n 1)
+        if [ -n "$DOMAIN_XT" ]; then
+            cat <<EOF > /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Success</title></head>
-<body style="text-align:center; padding:50px; font-family:sans-serif;">
-    <h1 style="color:#333;">🚀 服务已启动</h1>
-    <p>隧道地址: <b style="color:#f38020;">$DOMAIN_XT</b></p>
-    <p style="font-size:0.8em; color:#666;">UUID: $UUID</p>
+<head>
+    <meta charset="UTF-8">
+    <title>Service Dashboard</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f7f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; }
+        h1 { color: #2c3e50; }
+        .domain { color: #f38020; font-weight: bold; font-size: 1.2em; }
+        .path { color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🚀 极速 H3 服务已就绪</h1>
+        <p>主域名: <span class="domain">$DOMAIN_XT</span></p>
+        <hr>
+        <p>X-Tunnel 路径: <span class="path">$XTUNNEL_WSPATH</span></p>
+        <p>V2Ray 路径: <span class="path">$VMESS_WSPATH / $VLESS_WSPATH</span></p>
+        <p style="font-size:0.8em; color:#999;">UUID: $UUID</p>
+    </div>
 </body>
 </html>
 EOF
-        echo "X-Tunnel Domain: $DOMAIN_XT"
-    fi
+            echo "服务上线: $DOMAIN_XT"
+            break
+        fi
+        sleep 1
+    done
 ) &
 
-# 7. 【核心修改】内存流式启动 V2Ray (不产生明文 JSON 文件)
-# 读取 Dockerfile 写入的 config 密文 -> 解码 -> 变量替换 -> 管道输入 V2Ray
-echo "从内存加载配置启动 V2Ray..."
-
-# 使用 <( ) 语法，这会在内存中创建一个临时文件描述符，V2Ray 会像读取文件一样读取它
+# 7. 内存流式启动 V2Ray
+echo "V2Ray 正在以进程名 ${RELEASE_RANDOMNESS} 启动..."
 ./${RELEASE_RANDOMNESS} -config=<(cat config | base64 -d | sed "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g")
