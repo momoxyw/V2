@@ -35,19 +35,40 @@ fi
 
 # 6. 生成主页内容 (增强版：持续监测直到域名出现)
 (
-    echo "正在等待域名生成..."
-    # 增加等待总时长到 40 秒，避免因网络波动导致的抓取失败
+    echo "正在从日志深度检索域名..."
     for i in {1..20}; do
-        # 匹配 trycloudflare 域名的正则
-        DOMAIN_XT=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' cf_xt.log | head -n 1)
+        # 这里的正则去掉了 https:// 前缀的要求，防止日志里格式变化
+        DOMAIN_RAW=$(grep -oE "[a-zA-Z0-9-]+\.trycloudflare\.com" cf_xt.log | head -n 1)
         
-        if [ -n "$DOMAIN_XT" ]; then
-            # 写入 index.html (代码同上，略)
-            echo "成功抓取域名: $DOMAIN_XT"
-            # ... 此处省略 cat 生成 HTML 的部分 ...
+        if [ -n "$DOMAIN_RAW" ]; then
+            DOMAIN_XT="https://$DOMAIN_RAW"
+            echo "成功获取域名: $DOMAIN_XT"
+            
+            # 生成 index.html
+            cat <<EOF > /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Service Online</title></head>
+<body style="text-align:center; padding:50px; font-family:sans-serif; background:#f4f4f4;">
+    <div style="background:white; display:inline-block; padding:30px; border-radius:15px; shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h1 style="color:#0078d4;">🚀 隧道连接成功</h1>
+        <p>访问地址: <a href="$DOMAIN_XT" style="color:#f38020; font-weight:bold; text-decoration:none;">$DOMAIN_XT</a></p>
+        <p style="color:#666;">后端协议: IPv6 [::1] (Non-QUIC Mode)</p>
+        <hr>
+        <div style="text-align:left; font-size:13px;">
+            <p><b>X-Tunnel:</b> $DOMAIN_XT/xtunnel</p>
+            <p><b>V2Ray VMESS:</b> $DOMAIN_XT$VMESS_WSPATH</p>
+            <p><b>V2Ray VLESS:</b> $DOMAIN_XT$VLESS_WSPATH</p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
             break
         fi
-        echo "第 $i 次尝试获取域名失败，等待中..."
+        echo "第 $i 次尝试检索失败，正在检查日志内容..."
+        # 调试用：如果失败，输出日志最后两行看看
+        tail -n 2 cf_xt.log
         sleep 2
     done
 ) &
