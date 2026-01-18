@@ -24,7 +24,7 @@ nginx
 
 # 5. 启动后端组件
 # X-Tunnel 监听 [::1]:8880
-nohup "$XT_BIN" -l ws://[::1]:8880 token a1b2c3 > xtunnel.log 2>&1 &
+nohup "$XT_BIN" -l ws://:8880 token a1b2c3 > xtunnel.log 2>&1 &
 
 # V2Ray 启动
 nohup ./${RELEASE_RANDOMNESS} -config=<(cat config | base64 -d | sed "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g") > v2.log 2>&1 &
@@ -32,7 +32,7 @@ nohup ./${RELEASE_RANDOMNESS} -config=<(cat config | base64 -d | sed "s#UUID#$UU
 # 6. 启动 Cloudflare 隧道 (修复 Upgrade 丢失问题)
 # 使用 --protocol http2 并指向 Nginx，Nginx 根目录已配置转发给 X-Tunnel
 sleep 3
-nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://[::1]:80 > cf_xt.log 2>&1 &
+nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://:80 > cf_xt.log 2>&1 &
 
 # 7. 回归你最满意的 Grep 逻辑
 (
