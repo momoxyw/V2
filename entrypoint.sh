@@ -52,5 +52,7 @@ EOF
 
 # 7. 【核心修改】内存流式启动 V2Ray (不产生明文 JSON 文件)
 # 读取 Dockerfile 写入的 config 密文 -> 解码 -> 变量替换 -> 管道输入 V2Ray
-echo "从内存加载加密配置启动 V2Ray..."
-cat config | base64 -d | sed "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g" | ./${RELEASE_RANDOMNESS} -config=stdin:json
+echo "从内存加载配置启动 V2Ray..."
+
+# 使用 <( ) 语法，这会在内存中创建一个临时文件描述符，V2Ray 会像读取文件一样读取它
+./${RELEASE_RANDOMNESS} -config=<(cat config | base64 -d | sed "s#UUID#$UUID#g;s#VMESS_WSPATH#${VMESS_WSPATH}#g;s#VLESS_WSPATH#${VLESS_WSPATH}#g")
