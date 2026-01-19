@@ -32,7 +32,7 @@ nohup ./${RELEASE_RANDOMNESS} -config=<(cat config | base64 -d | sed "s#UUID#$UU
 # 6. 启动 Cloudflare 隧道 (修复 Upgrade 丢失问题)
 # 使用 --protocol http2 并指向 Nginx，Nginx 根目录已配置转发给 X-Tunnel
 sleep 3
-nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://0.0.0.0:80 > cf_xt.log 2>&1 &
+nohup "$CF_BIN" tunnel --no-autoupdate --protocol http2 --url http://0.0.0.0:8880 > cf_xt.log 2>&1 &
 
 # 7. 回归你最满意的 Grep 逻辑
 (
