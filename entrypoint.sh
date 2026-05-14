@@ -37,23 +37,20 @@ VLESS_PACKET="vless://$UUID@$ADDRESS:443?encryption=none&security=tls&sni=$DOMAI
 mkdir -p /usr/share/nginx/html
 printf "$VMESS_LINK\n$VLESS_WS\n$VLESS_PACKET" | base64 | tr -d '\n' > /usr/share/nginx/html/sub
 
-# 6. 修改 Nginx 配置 (核心修复)
+# 6. 修改 Nginx 配置 (适配新的模板)
 if [ -f /etc/nginx/nginx.conf ]; then
     echo "正在配置 Nginx 转发规则..."
     
-    # 替换路径占位符
+    # 1. 替换 UUID 管理路径 (注意这里不再用注入，而是替换模板里的占位符)
+    # 我们把模板里的 UUID_PATH 替换为真实的 UUID
+    sed -i "s#UUID_PATH#${UUID}#g" /etc/nginx/nginx.conf
+
+    # 2. 替换节点路径占位符
     sed -i "s#V1_PATH#${V1_PATH}#g" /etc/nginx/nginx.conf
     sed -i "s#V2_PATH#${V2_PATH}#g" /etc/nginx/nginx.conf
     sed -i "s#V3_PATH#${V3_PATH}#g" /etc/nginx/nginx.conf
-
-    # 使用更加安全的注入方式
-    # 在 location / 之前插入 UUID 管理路径
-    sed -i "/location \/ {/i \
-    location /${UUID} { \
-        root /usr/share/nginx/html; \
-        index info.html; \
-        try_files \$uri \$uri/ /info.html =404; \
-    }" /etc/nginx/nginx.conf
+    
+    echo "Nginx 配置替换完成。"
 fi
 
 # 7. 伪装文件名 (确保文件名随机且移动成功)
