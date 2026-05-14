@@ -50,17 +50,15 @@ printf "$VMESS_LINK\n$VLESS_WS\n$VLESS_PACKET" | base64 | tr -d '\n' > /usr/shar
 # 6. 修改 Nginx 配置 (核心修复：解决路径替换和括号匹配)
 if [ -f /etc/nginx/nginx.conf ]; then
     echo "正在配置 Nginx 转发规则..."
-    # 替换路径占位符
     sed -i "s#V1_PATH#${V1_PATH}#g" /etc/nginx/nginx.conf
     sed -i "s#V2_PATH#${V2_PATH}#g" /etc/nginx/nginx.conf
     sed -i "s#V3_PATH#${V3_PATH}#g" /etc/nginx/nginx.conf
 
-    # 注入管理后台路径 (在 location / 之前插入)
-    # 注意：使用简单的文本追加，避免 sed 版本差异
+    # 修复：直接指向具体的 info.html 文件，或者确保 index 指令正确
     sed -i "/location \/ {/i \
         location /${UUID} { \
-            alias /usr/share/nginx/html/; \
-            index info.html; \
+            root /usr/share/nginx/html; \
+            try_files /info.html =404; \
         }" /etc/nginx/nginx.conf
 fi
 
