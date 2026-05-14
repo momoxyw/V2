@@ -20,7 +20,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           # 确保这里引用的名字和你在 Settings 页面填写的 Secret 名字一模一样
-          username: ${{ secrets.momoxyw }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -33,4 +33,4 @@ jobs:
           push: true
           # 请把 'yourusername' 改成你的 Docker Hub 用户名
           # 把 'your-repo-name' 改成你想给镜像起的名字
-          tags: ${{ secrets.momoxyw }}/v2x:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/v2x:latest
