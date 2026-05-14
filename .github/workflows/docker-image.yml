@@ -1,34 +1,36 @@
 name: Build and Push Docker Image
 
-# 設定觸發條件：當代碼推送到 main 分支時執行
 on:
   push:
-    branches: [ "dockerimage" ]
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# 全局环境变量，解决 Node 20 过期警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      # 1. 檢出 GitHub 倉庫代碼
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. 登入 Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          # 确保这里引用的名字和你在 Settings 页面填写的 Secret 名字一模一样
+          username: ${{ secrets.momoxyw }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. 設置 Docker Buildx (用於構建更強大的鏡像)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. 構建並推送鏡像
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # 鏡像標籤：用戶名/倉庫名:latest
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/v2x:latest
+          # 请把 'yourusername' 改成你的 Docker Hub 用户名
+          # 把 'your-repo-name' 改成你想给镜像起的名字
+          tags: ${{ secrets.momoxyw }}/v2x:latest
