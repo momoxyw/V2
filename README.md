@@ -39,6 +39,9 @@
 ![image](https://user-images.githubusercontent.com/92626977/211201196-3d7e59ae-3b55-42db-81ac-b324d60a0bb1.png)
 ![image](https://user-images.githubusercontent.com/92626977/211201217-6a5c9493-4aa9-4c68-9cba-966893617ab0.png)
 
+
+使用cloudflare workers 或 snippets 反代域名给节点套cdn加速,参考佬王的项目，https://github.com/eooce/python-ws#%E4%BD%BF%E7%94%A8cloudflare-workers-%E6%88%96-snippets-%E5%8F%8D%E4%BB%A3%E5%9F%9F%E5%90%8D%E7%BB%99%E8%8A%82%E7%82%B9%E5%A5%97cdn%E5%8A%A0%E9%80%9F%E4%B9%9F%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E7%AB%AF%E5%8F%A3%E5%9B%9E%E6%BA%90%E6%96%B9%E5%BC%8F
+
 ## 鸣谢下列作者的文章和项目:
 * ifeng 的 v2ray 项目，在此基础上作修改 https://www.hicairo.com https://github.com/hiifeng
 
